@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 
 moscow_tz = pytz.timezone('Europe/Moscow')
@@ -117,24 +117,38 @@ def get_initial_info_posts():
     }
 
 
-def initialize_times(start_delay_minutes=1):
+def initialize_times():
     """Инициализация времен для вопросов и инфо-постов"""
-    now = datetime.now(moscow_tz)
-
     questions = get_initial_questions()
     info_posts = get_initial_info_posts()
 
-    # Устанавливаем времена для вопросов
-    for q_id in questions:
-        questions[q_id]['start_time'] = now + timedelta(minutes=start_delay_minutes + (q_id - 1) * 5)
-        questions[q_id]['end_time'] = questions[q_id]['start_time'] + timedelta(minutes=4)
-        questions[q_id]['notified'] = False  # Флаг для отслеживания отправки
+    # Устанавливаем конкретные даты и времена для вопросов
+    question_schedule = {
+        1: {'start': '2025-01-29 09:00', 'end': '2025-01-30 08:00'},
+        2: {'start': '2025-01-31 09:00', 'end': '2025-02-03 08:00'},
+        3: {'start': '2025-02-03 09:00', 'end': '2025-02-05 08:00'},
+        4: {'start': '2025-02-05 09:00', 'end': '2025-02-07 08:00'},
+        5: {'start': '2025-02-07 09:00', 'end': '2025-02-10 08:00'},
+        6: {'start': '2025-02-10 09:00', 'end': '2025-02-12 11:00'}
+    }
 
-    # Устанавливаем времена для инфо-постов
-    post_times = {1: 3, 2: 13, 3: 23}  # минуты для каждого поста
-    for post_id in info_posts:
-        info_posts[post_id]['publish_time'] = now + timedelta(minutes=post_times[post_id])
-        info_posts[post_id]['notified'] = False  # Флаг для отслеживания отправки
+    # Устанавливаем конкретные даты и времена для инфопостов
+    info_post_schedule = {
+        1: '2025-02-01 09:00',
+        2: '2025-02-06 09:00',
+        3: '2025-02-08 09:00'
+    }
+
+    # Применяем расписание к вопросам
+    for q_id, times in question_schedule.items():
+        questions[q_id]['start_time'] = moscow_tz.localize(datetime.strptime(times['start'], '%Y-%m-%d %H:%M'))
+        questions[q_id]['end_time'] = moscow_tz.localize(datetime.strptime(times['end'], '%Y-%m-%d %H:%M'))
+        questions[q_id]['notified'] = False
+
+    # Применяем расписание к инфопостам
+    for post_id, time_str in info_post_schedule.items():
+        info_posts[post_id]['publish_time'] = moscow_tz.localize(datetime.strptime(time_str, '%Y-%m-%d %H:%M'))
+        info_posts[post_id]['notified'] = False
 
     return questions, info_posts
 
@@ -143,7 +157,7 @@ def initialize_times(start_delay_minutes=1):
 QUESTIONS, INFO_POSTS = initialize_times()
 
 
-def reset_times(start_delay_minutes=1):
+def reset_times():
     """Функция для сброса времен (используется при перезапуске)"""
     global QUESTIONS, INFO_POSTS
-    QUESTIONS, INFO_POSTS = initialize_times(start_delay_minutes)
+    QUESTIONS, INFO_POSTS = initialize_times()
